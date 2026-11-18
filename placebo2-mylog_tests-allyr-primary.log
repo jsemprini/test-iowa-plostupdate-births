@@ -1,0 +1,73 @@
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\jsemprini\OneDrive - Des Moines University\4-DMU-Research\a-Water\final-plosupdate\stata\placebo2-mylog_tests-allyr-primary.log
+  log type:  text
+ opened on:  17 Nov 2026, 21:37:05
+
+. *****test exposure on outcomes*****
+. qui: reghdfe infant_male i.n_cat i.($controls) c.maternal_age  , vce(cluster county_fips) absorb(county_fips#birth_year  birth_year#conception_quarter county_fips#conception_
+> quarter)
+
+. 
+. test 1.n_cat = 2.n_cat
+
+ ( 1)  1.n_cat - 2.n_cat = 0
+
+       F(  1,    95) =    3.48
+            Prob > F =    0.0651
+
+. 
+. margins , dydx(n_cat)
+
+Average marginal effects                               Number of obs = 113,328
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |  -.0004902   .0072378    -0.07   0.946     -.014676    .0136956
+          2  |  -.0131695   .0098485    -1.34   0.181    -.0324721    .0061332
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. margins , dydx(n_cat) mcompare(sidak)
+
+Average marginal effects                               Number of obs = 113,328
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+---------------------------
+             |    Number of
+             |  comparisons
+-------------+-------------
+       n_cat |            2
+---------------------------
+
+------------------------------------------------------------------------------
+             |            Delta-method      Sidak                Sidak
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |  -.0004902   .0072378    -0.07   0.997    -.0166773    .0156969
+          2  |  -.0131695   .0098485    -1.34   0.329    -.0351953    .0088564
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. 
+. 
+. 
+. 
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\Users\jsemprini\OneDrive - Des Moines University\4-DMU-Research\a-Water\final-plosupdate\stata\placebo2-mylog_tests-allyr-primary.log
+  log type:  text
+ closed on:  17 Nov 2026, 21:37:16
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

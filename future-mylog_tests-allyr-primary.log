@@ -1,0 +1,391 @@
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\jsemprini\OneDrive - Des Moines University\4-DMU-Research\a-Water\final-plosupdate\stata\future-mylog_tests-allyr-primary.log
+  log type:  text
+ opened on:  17 Nov 2026, 22:59:17
+
+. *****test exposure on outcomes*****
+. qui: reghdfe lbw i.n_cat i.($controls) c.maternal_age , vce(cluster county_fips) absorb(county_fips#birth_year  birth_year#conception_quarter)
+
+. 
+. margins , dydx(n_cat)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |  -.0007899   .0023738    -0.33   0.739    -.0054425    .0038628
+          2  |  -.0003582   .0026615    -0.13   0.893    -.0055746    .0048582
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. margins , dydx(n_cat) mcompare(sidak)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+---------------------------
+             |    Number of
+             |  comparisons
+-------------+-------------
+       n_cat |            2
+---------------------------
+
+------------------------------------------------------------------------------
+             |            Delta-method      Sidak                Sidak
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |  -.0007899   .0023738    -0.33   0.932    -.0060989    .0045192
+          2  |  -.0003582   .0026615    -0.13   0.989    -.0063105    .0055941
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. 
+. qui: reghdfe lbw i.n_cat_future i.($controls) c.maternal_age , vce(cluster county_fips) absorb(county_fips#birth_year  birth_year#conception_quarter)
+
+. 
+. margins , dydx(n_cat_future)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat_future 2.n_cat_future
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+n_cat_future |
+          1  |  -.0019264   .0026364    -0.73   0.465    -.0070937    .0032409
+          2  |  -.0054431   .0033943    -1.60   0.109    -.0120957    .0012096
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. margins , dydx(n_cat_future) mcompare(sidak)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat_future 2.n_cat_future
+
+---------------------------
+             |    Number of
+             |  comparisons
+-------------+-------------
+n_cat_future |            2
+---------------------------
+
+------------------------------------------------------------------------------
+             |            Delta-method      Sidak                Sidak
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+n_cat_future |
+          1  |  -.0019264   .0026364    -0.73   0.714    -.0078227    .0039699
+          2  |  -.0054431   .0033943    -1.60   0.206    -.0130343    .0021481
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. 
+. 
+. qui: reghdfe ptb i.n_cat i.($controls) c.maternal_age , vce(cluster county_fips) absorb(county_fips#birth_year  birth_year#conception_quarter)
+
+. 
+. margins , dydx(n_cat)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0055893   .0037616     1.49   0.137    -.0017834     .012962
+          2  |   .0149351   .0047926     3.12   0.002     .0055418    .0243284
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. margins , dydx(n_cat) mcompare(sidak)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+---------------------------
+             |    Number of
+             |  comparisons
+-------------+-------------
+       n_cat |            2
+---------------------------
+
+------------------------------------------------------------------------------
+             |            Delta-method      Sidak                Sidak
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0055893   .0037616     1.49   0.256    -.0028236    .0140021
+          2  |   .0149351   .0047926     3.12   0.004     .0042166    .0256536
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. 
+. qui: reghdfe ptb i.n_cat_future i.($controls) c.maternal_age , vce(cluster county_fips) absorb(county_fips#birth_year  birth_year#conception_quarter)
+
+. 
+. margins , dydx(n_cat_future)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat_future 2.n_cat_future
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+n_cat_future |
+          1  |   -.000723   .0029714    -0.24   0.808    -.0065467    .0051008
+          2  |   .0037326   .0037757     0.99   0.323    -.0036676    .0111328
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. margins , dydx(n_cat_future) mcompare(sidak)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat_future 2.n_cat_future
+
+---------------------------
+             |    Number of
+             |  comparisons
+-------------+-------------
+n_cat_future |            2
+---------------------------
+
+------------------------------------------------------------------------------
+             |            Delta-method      Sidak                Sidak
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+n_cat_future |
+          1  |   -.000723   .0029714    -0.24   0.963    -.0073684    .0059224
+          2  |   .0037326   .0037757     0.99   0.541    -.0047116    .0121769
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. 
+. 
+. qui: reghdfe vlbw i.n_cat i.($controls) c.maternal_age , vce(cluster county_fips) absorb(county_fips#birth_year  birth_year#conception_quarter)
+
+. 
+. margins , dydx(n_cat)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0007861   .0013937     0.56   0.573    -.0019454    .0035177
+          2  |   .0035081   .0016658     2.11   0.035     .0002432    .0067731
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. margins , dydx(n_cat) mcompare(sidak)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+---------------------------
+             |    Number of
+             |  comparisons
+-------------+-------------
+       n_cat |            2
+---------------------------
+
+------------------------------------------------------------------------------
+             |            Delta-method      Sidak                Sidak
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0007861   .0013937     0.56   0.817    -.0023308    .0039031
+          2  |   .0035081   .0016658     2.11   0.069    -.0002174    .0072337
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. 
+. qui: reghdfe vlbw i.n_cat_future i.($controls) c.maternal_age , vce(cluster county_fips) absorb(county_fips#birth_year  birth_year#conception_quarter)
+
+. 
+. margins , dydx(n_cat_future)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat_future 2.n_cat_future
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+n_cat_future |
+          1  |  -.0002249   .0013106    -0.17   0.864    -.0027937    .0023438
+          2  |  -.0004344   .0018059    -0.24   0.810    -.0039738     .003105
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. margins , dydx(n_cat_future) mcompare(sidak)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat_future 2.n_cat_future
+
+---------------------------
+             |    Number of
+             |  comparisons
+-------------+-------------
+n_cat_future |            2
+---------------------------
+
+------------------------------------------------------------------------------
+             |            Delta-method      Sidak                Sidak
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+n_cat_future |
+          1  |  -.0002249   .0013106    -0.17   0.981    -.0031561    .0027063
+          2  |  -.0004344   .0018059    -0.24   0.964    -.0044731    .0036044
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. 
+. qui: reghdfe vptb i.n_cat i.($controls) c.maternal_age , vce(cluster county_fips) absorb(county_fips#birth_year  birth_year#conception_quarter)
+
+. 
+. margins , dydx(n_cat)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0028985   .0023074     1.26   0.209    -.0016239    .0074209
+          2  |   .0066168   .0028247     2.34   0.019     .0010804    .0121531
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. margins , dydx(n_cat) mcompare(sidak)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+---------------------------
+             |    Number of
+             |  comparisons
+-------------+-------------
+       n_cat |            2
+---------------------------
+
+------------------------------------------------------------------------------
+             |            Delta-method      Sidak                Sidak
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0028985   .0023074     1.26   0.374     -.002262    .0080589
+          2  |   .0066168   .0028247     2.34   0.038     .0002993    .0129342
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. 
+. qui: reghdfe vptb i.n_cat_future i.($controls) c.maternal_age , vce(cluster county_fips) absorb(county_fips#birth_year  birth_year#conception_quarter)
+
+. 
+. margins , dydx(n_cat_future)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat_future 2.n_cat_future
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+n_cat_future |
+          1  |  -.0001631   .0017928    -0.09   0.928    -.0036769    .0033508
+          2  |    .001108   .0022785     0.49   0.627    -.0033577    .0055737
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. margins , dydx(n_cat_future) mcompare(sidak)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat_future 2.n_cat_future
+
+---------------------------
+             |    Number of
+             |  comparisons
+-------------+-------------
+n_cat_future |            2
+---------------------------
+
+------------------------------------------------------------------------------
+             |            Delta-method      Sidak                Sidak
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+n_cat_future |
+          1  |  -.0001631   .0017928    -0.09   0.995    -.0041727    .0038465
+          2  |    .001108   .0022785     0.49   0.861    -.0039877    .0062037
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\Users\jsemprini\OneDrive - Des Moines University\4-DMU-Research\a-Water\final-plosupdate\stata\future-mylog_tests-allyr-primary.log
+  log type:  text
+ closed on:  17 Nov 2026, 22:59:45
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -1,0 +1,195 @@
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\jsemprini\OneDrive - Des Moines University\4-DMU-Research\a-Water\final-plosupdate\stata\future-emylog_tests-allyr-five-sens.log
+  log type:  text
+ opened on:  17 Nov 2026, 22:59:45
+
+. *****test exposure on outcomes*****
+. 
+. estimates clear
+
+. ***sens***
+. 
+. foreach y in ptb  lbw   {
+  2.         foreach x in n_five_c n_five_c_future {
+  3. qui: reghdfe `y' i.`x' i.($controls) c.maternal_age, vce(cluster county_fips) absorb(county_fips#birth_year  birth_year#conception_quarter )
+  4. 
+. eststo: margins , dydx(`x') post
+  5. 
+. qui: reghdfe `y' i.`x' i.($controls ) c.maternal_age , vce(cluster county_fips) absorb(county_fips#birth_year  birth_year#conception_quarter birth_year#conception_quarter cou
+> nty_fips#conception_quarter)
+  6. 
+. eststo: margins , dydx(`x') post
+  7. 
+. }
+  8. 
+. } 
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_five_c
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+  1.n_five_c |   .0093776   .0034572     2.71   0.007     .0026016    .0161536
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+(est1 stored)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_five_c
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+  1.n_five_c |   .0119675   .0054342     2.20   0.028     .0013167    .0226182
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+(est2 stored)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_five_c_future
+
+-----------------------------------------------------------------------------------
+                  |            Delta-method
+                  |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+------------------+----------------------------------------------------------------
+1.n_five_c_future |   .0044376   .0027677     1.60   0.109    -.0009871    .0098622
+-----------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+(est3 stored)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_five_c_future
+
+-----------------------------------------------------------------------------------
+                  |            Delta-method
+                  |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+------------------+----------------------------------------------------------------
+1.n_five_c_future |   .0080473   .0052371     1.54   0.124    -.0022172    .0183118
+-----------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+(est4 stored)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_five_c
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+  1.n_five_c |   .0004272   .0015698     0.27   0.786    -.0026495    .0035039
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+(est5 stored)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_five_c
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+  1.n_five_c |   .0029062   .0020075     1.45   0.148    -.0010286    .0068409
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+(est6 stored)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_five_c_future
+
+-----------------------------------------------------------------------------------
+                  |            Delta-method
+                  |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+------------------+----------------------------------------------------------------
+1.n_five_c_future |  -.0035647   .0018238    -1.95   0.051    -.0071392    9.80e-06
+-----------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+(est7 stored)
+
+Average marginal effects                                Number of obs = 92,564
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_five_c_future
+
+-----------------------------------------------------------------------------------
+                  |            Delta-method
+                  |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+------------------+----------------------------------------------------------------
+1.n_five_c_future |  -.0016387   .0023664    -0.69   0.489    -.0062769    .0029994
+-----------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+(est8 stored)
+
+. 
+. esttab , b(4) ci(4)
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+> --------------------------------------------
+                                (1)                       (2)                       (3)                       (4)                       (5)                       (6)           
+>             (7)                       (8)   
+                                                                                                                                                                                
+>                                             
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+> --------------------------------------------
+0.n_five_c                   0.0000                    0.0000                                                                        0.0000                    0.0000           
+>                                             
+                    [0.0000,0.0000]           [0.0000,0.0000]                                                               [0.0000,0.0000]           [0.0000,0.0000]           
+>                                             
+
+1.n_five_c                   0.0094**                  0.0120*                                                                       0.0004                    0.0029           
+>                                             
+                    [0.0026,0.0162]           [0.0013,0.0226]                                                              [-0.0026,0.0035]          [-0.0010,0.0068]           
+>                                             
+
+0.n_five_c~e                                                                     0.0000                    0.0000                                                               
+>          0.0000                    0.0000   
+                                                                        [0.0000,0.0000]           [0.0000,0.0000]                                                               
+> [0.0000,0.0000]           [0.0000,0.0000]   
+
+1.n_five_c~e                                                                     0.0044                    0.0080                                                               
+>         -0.0036                   -0.0016   
+                                                                       [-0.0010,0.0099]          [-0.0022,0.0183]                                                              [
+> -0.0071,0.0000]          [-0.0063,0.0030]   
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+> --------------------------------------------
+N                             92564                     92564                     92564                     92564                     92564                     92564           
+>           92564                     92564   
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+> --------------------------------------------
+95% confidence intervals in brackets
+* p<0.05, ** p<0.01, *** p<0.001
+
+. 
+. 
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\Users\jsemprini\OneDrive - Des Moines University\4-DMU-Research\a-Water\final-plosupdate\stata\future-emylog_tests-allyr-five-sens.log
+  log type:  text
+ closed on:  17 Nov 2026, 22:59:59
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

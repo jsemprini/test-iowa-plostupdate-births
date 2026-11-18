@@ -1,0 +1,826 @@
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\jsemprini\OneDrive - Des Moines University\4-DMU-Research\a-Water\final-plosupdate\stata\missing-mylog_tests-allyr-primary.log
+  log type:  text
+ opened on:  17 Nov 2026, 15:13:28
+
+. *****test exposure on outcomes*****
+. * Start AFTER all other primary eligibility restrictions,
+. * but BEFORE excluding births with missing control variables.
+. * Unknown source codes must already be converted to missing.
+. 
+. local binary parity2 parity3plus meduc_hs meduc_gt_hs ///
+>              infant_male married
+
+. 
+. * Identify complete and incomplete covariate records.
+. egen nmiss_cov = rowmiss(`binary' maternal_age)
+
+. gen byte complete_cov = (nmiss_cov == 0)
+
+. 
+. tab complete_cov
+
+complete_co |
+          v |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |        214        0.19        0.19
+          1 |    113,331       99.81      100.00
+------------+-----------------------------------
+      Total |    113,545      100.00
+
+. misstable summarize `binary' maternal_age
+                                                               Obs<.
+                                                +------------------------------
+               |                                | Unique
+      Variable |     Obs=.     Obs>.     Obs<.  | values        Min         Max
+  -------------+--------------------------------+------------------------------
+       parity2 |        27             113,518  |      2          0           1
+   parity3plus |        27             113,518  |      2          0           1
+      meduc_hs |       186             113,359  |      2          0           1
+   meduc_gt_hs |       186             113,359  |      2          0           1
+       married |         1             113,544  |      2          0           1
+  -----------------------------------------------------------------------------
+
+. 
+. * Describe whether missingness differs across exposure groups.
+. tab n_cat complete_cov, column
+
++-------------------+
+| Key               |
+|-------------------|
+|     frequency     |
+| column percentage |
++-------------------+
+
+           |     complete_cov
+     n_cat |         0          1 |     Total
+-----------+----------------------+----------
+         0 |        27     10,423 |    10,450 
+           |     12.62       9.20 |      9.20 
+-----------+----------------------+----------
+         1 |       116     80,040 |    80,156 
+           |     54.21      70.62 |     70.59 
+-----------+----------------------+----------
+         2 |        71     22,868 |    22,939 
+           |     33.18      20.18 |     20.20 
+-----------+----------------------+----------
+     Total |       214    113,331 |   113,545 
+           |    100.00     100.00 |    100.00 
+
+. tabstat lbw vlbw ptb vptb, by(complete_cov) statistics(n mean)
+
+Summary statistics: N, Mean
+Group variable: complete_cov 
+
+complete_cov |       lbw      vlbw       ptb      vptb
+-------------+----------------------------------------
+           0 |       214       214       214       214
+             |  .1028037  .0233645  .1401869  .0420561
+-------------+----------------------------------------
+           1 |    113331    113331    113331    113331
+             |  .0430509  .0063884  .0770045  .0113738
+-------------+----------------------------------------
+       Total |    113545    113545    113545    113545
+             |  .0431635  .0064204  .0771236  .0114316
+------------------------------------------------------
+
+. 
+. * Construct filled controls and variable-specific missing indicators.
+. local cc_controls
+
+. local missing_controls
+
+. 
+. foreach v of local binary {
+  2.     assert inlist(`v', 0, 1) | missing(`v')
+  3. 
+.     gen byte miss_`v' = missing(`v')
+  4.     clonevar fill_`v' = `v'
+  5.     replace fill_`v' = 0 if missing(`v')
+  6. 
+.     local cc_controls `cc_controls' i.`v'
+  7.     local missing_controls `missing_controls' ///
+>         i.fill_`v' i.miss_`v'
+  8. }
+(27 missing values generated)
+(27 real changes made)
+(27 missing values generated)
+(27 real changes made)
+(186 missing values generated)
+(186 real changes made)
+(186 missing values generated)
+(186 real changes made)
+(0 real changes made)
+(1 missing value generated)
+(1 real change made)
+
+. 
+. * Continuous maternal age: placeholder plus missingness indicator.
+. gen byte miss_age = missing(maternal_age)
+
+. gen double fill_age = maternal_age
+
+. replace fill_age = 0 if missing(maternal_age)
+(0 real changes made)
+
+. 
+. * Compare the original categorical exposure models.
+. foreach y in ptb vptb lbw vlbw {
+  2. 
+.     display as text "`y': COMPLETE-CASE ANALYSIS"
+  3. 
+.     reghdfe `y' ib0.n_cat `cc_controls' c.maternal_age ///
+>         if complete_cov == 1, ///
+>         absorb(county_fips#birth_year birth_year#conception_quarter) ///
+>         vce(cluster county_fips)
+  4. 
+.     margins, dydx(n_cat)
+  5.     margins, dydx(n_cat) mcompare(sidak)
+  6. 
+.     display as text "`y': MISSING-INDICATOR ANALYSIS"
+  7. 
+.     reghdfe `y' ib0.n_cat `missing_controls' ///
+>         c.fill_age i.miss_age, ///
+>         absorb(county_fips#birth_year birth_year#conception_quarter) ///
+>         vce(cluster county_fips)
+  8. 
+.     margins, dydx(n_cat)
+  9.     margins, dydx(n_cat) mcompare(sidak)
+ 10. }
+ptb: COMPLETE-CASE ANALYSIS
+(dropped 3 singleton observations)
+(MWFE estimator converged in 6 iterations)
+
+HDFE Linear regression                            Number of obs   =    113,328
+Absorbing 2 HDFE groups                           F(   9,     95) =      78.03
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.0184
+                                                  Adj R-squared   =     0.0136
+                                                  Within R-sq.    =     0.0063
+Number of clusters (county_fips) =         96     Root MSE        =     0.2648
+
+                            (Std. err. adjusted for 96 clusters in county_fips)
+-------------------------------------------------------------------------------
+              |               Robust
+          ptb | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+--------------+----------------------------------------------------------------
+        n_cat |
+           1  |   .0027525   .0031845     0.86   0.390    -.0035696    .0090746
+           2  |   .0103581   .0040415     2.56   0.012     .0023347    .0183815
+              |
+    1.parity2 |  -.0201713     .00174   -11.59   0.000    -.0236256    -.016717
+1.parity3plus |  -.0197487   .0030112    -6.56   0.000    -.0257267   -.0137708
+   1.meduc_hs |  -.0318079   .0025893   -12.28   0.000    -.0369482   -.0266676
+1.meduc_gt_hs |  -.0433192   .0028155   -15.39   0.000    -.0489087   -.0377298
+1.infant_male |   .0103212   .0014307     7.21   0.000     .0074808    .0131615
+    1.married |  -.0291663    .004389    -6.65   0.000    -.0378796   -.0204531
+ maternal_age |   .0003555    .000203     1.75   0.083    -.0000475    .0007586
+        _cons |   .1303088   .0069338    18.79   0.000     .1165434    .1440742
+-------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-------------------------------------------------------------------------+
+                     Absorbed FE | Categories  - Redundant  = Num. Coefs |
+---------------------------------+---------------------------------------|
+          county_fips#birth_year |       524         524           0    *|
+   birth_year#conception_quarter |        23           1          22     |
+-------------------------------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+Average marginal effects                               Number of obs = 113,328
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0027525   .0031845     0.86   0.387    -.0034891    .0089941
+          2  |   .0103581   .0040415     2.56   0.010     .0024369    .0182793
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+Average marginal effects                               Number of obs = 113,328
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+---------------------------
+             |    Number of
+             |  comparisons
+-------------+-------------
+       n_cat |            2
+---------------------------
+
+------------------------------------------------------------------------------
+             |            Delta-method      Sidak                Sidak
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0027525   .0031845     0.86   0.625    -.0043696    .0098747
+          2  |   .0103581   .0040415     2.56   0.021     .0013194    .0193968
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+ptb: MISSING-INDICATOR ANALYSIS
+(dropped 3 singleton observations)
+(MWFE estimator converged in 6 iterations)
+note: 0bn.miss_infant_male is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: 0bn.miss_age is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: 0b.miss_parity3plus omitted because of collinearity
+note: 0b.miss_meduc_gt_hs omitted because of collinearity
+
+HDFE Linear regression                            Number of obs   =    113,542
+Absorbing 2 HDFE groups                           F(  12,     95) =     257.45
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.0185
+                                                  Adj R-squared   =     0.0137
+                                                  Within R-sq.    =     0.0064
+Number of clusters (county_fips) =         96     Root MSE        =     0.2649
+
+                                 (Std. err. adjusted for 96 clusters in county_fips)
+------------------------------------------------------------------------------------
+                   |               Robust
+               ptb | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------------+----------------------------------------------------------------
+             n_cat |
+                1  |   .0029544   .0031777     0.93   0.355    -.0033542     .009263
+                2  |   .0104324   .0040187     2.60   0.011     .0024542    .0184105
+                   |
+    1.fill_parity2 |  -.0202926    .001699   -11.94   0.000    -.0236654   -.0169197
+    1.miss_parity2 |     .03554   .0435123     0.82   0.416    -.0508428    .1219228
+1.fill_parity3plus |  -.0197759    .002976    -6.65   0.000     -.025684   -.0138678
+1.miss_parity3plus |          0  (omitted)
+   1.fill_meduc_hs |   -.031921   .0025908   -12.32   0.000    -.0370643   -.0267777
+   1.miss_meduc_hs |   .0248597   .0230154     1.08   0.283    -.0208316     .070551
+1.fill_meduc_gt_hs |  -.0434371    .002813   -15.44   0.000    -.0490217   -.0378525
+1.miss_meduc_gt_hs |          0  (omitted)
+1.fill_infant_male |   .0102933   .0014367     7.16   0.000      .007441    .0131455
+0.miss_infant_male |          0  (omitted)
+    1.fill_married |  -.0290429   .0043919    -6.61   0.000     -.037762   -.0203238
+    1.miss_married |  -.0957209   .0062172   -15.40   0.000    -.1080636   -.0833781
+          fill_age |   .0003612    .000204     1.77   0.080    -.0000437    .0007661
+        0.miss_age |          0  (omitted)
+             _cons |   .1300627   .0069788    18.64   0.000     .1162081    .1439172
+------------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-------------------------------------------------------------------------+
+                     Absorbed FE | Categories  - Redundant  = Num. Coefs |
+---------------------------------+---------------------------------------|
+          county_fips#birth_year |       524         524           0    *|
+   birth_year#conception_quarter |        23           1          22     |
+-------------------------------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+Average marginal effects                               Number of obs = 113,542
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0029544   .0031777     0.93   0.353    -.0032738    .0091827
+          2  |   .0104324   .0040187     2.60   0.009     .0025558    .0183089
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+Average marginal effects                               Number of obs = 113,542
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+---------------------------
+             |    Number of
+             |  comparisons
+-------------+-------------
+       n_cat |            2
+---------------------------
+
+------------------------------------------------------------------------------
+             |            Delta-method      Sidak                Sidak
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0029544   .0031777     0.93   0.581    -.0041525    .0100614
+          2  |   .0104324   .0040187     2.60   0.019     .0014446    .0194201
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+vptb: COMPLETE-CASE ANALYSIS
+(dropped 3 singleton observations)
+(MWFE estimator converged in 6 iterations)
+
+HDFE Linear regression                            Number of obs   =    113,328
+Absorbing 2 HDFE groups                           F(   9,     95) =      13.85
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.0140
+                                                  Adj R-squared   =     0.0091
+                                                  Within R-sq.    =     0.0024
+Number of clusters (county_fips) =         96     Root MSE        =     0.1056
+
+                            (Std. err. adjusted for 96 clusters in county_fips)
+-------------------------------------------------------------------------------
+              |               Robust
+         vptb | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+--------------+----------------------------------------------------------------
+        n_cat |
+           1  |   .0016987   .0018946     0.90   0.372    -.0020627      .00546
+           2  |   .0052561   .0022811     2.30   0.023     .0007275    .0097846
+              |
+    1.parity2 |  -.0034948   .0006252    -5.59   0.000     -.004736   -.0022537
+1.parity3plus |  -.0036612   .0011426    -3.20   0.002    -.0059295   -.0013929
+   1.meduc_hs |  -.0060305   .0016929    -3.56   0.001    -.0093913   -.0026697
+1.meduc_gt_hs |  -.0083786    .001414    -5.93   0.000    -.0111858   -.0055714
+1.infant_male |    .000799   .0004797     1.67   0.099    -.0001533    .0017512
+    1.married |  -.0097488   .0016248    -6.00   0.000    -.0129744   -.0065232
+ maternal_age |   -.000017   .0000902    -0.19   0.851     -.000196     .000162
+        _cons |   .0264782    .003521     7.52   0.000     .0194881    .0334683
+-------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-------------------------------------------------------------------------+
+                     Absorbed FE | Categories  - Redundant  = Num. Coefs |
+---------------------------------+---------------------------------------|
+          county_fips#birth_year |       524         524           0    *|
+   birth_year#conception_quarter |        23           1          22     |
+-------------------------------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+Average marginal effects                               Number of obs = 113,328
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0016987   .0018946     0.90   0.370    -.0020148    .0054121
+          2  |   .0052561   .0022811     2.30   0.021     .0007852    .0097269
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+Average marginal effects                               Number of obs = 113,328
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+---------------------------
+             |    Number of
+             |  comparisons
+-------------+-------------
+       n_cat |            2
+---------------------------
+
+------------------------------------------------------------------------------
+             |            Delta-method      Sidak                Sidak
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0016987   .0018946     0.90   0.603    -.0025387     .005936
+          2  |   .0052561   .0022811     2.30   0.042     .0001544    .0103577
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+vptb: MISSING-INDICATOR ANALYSIS
+(dropped 3 singleton observations)
+(MWFE estimator converged in 6 iterations)
+note: 0bn.miss_infant_male is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: 0bn.miss_age is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: 0b.miss_parity3plus omitted because of collinearity
+note: 0b.miss_meduc_gt_hs omitted because of collinearity
+
+HDFE Linear regression                            Number of obs   =    113,542
+Absorbing 2 HDFE groups                           F(  12,     95) =     248.02
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.0142
+                                                  Adj R-squared   =     0.0094
+                                                  Within R-sq.    =     0.0025
+Number of clusters (county_fips) =         96     Root MSE        =     0.1058
+
+                                 (Std. err. adjusted for 96 clusters in county_fips)
+------------------------------------------------------------------------------------
+                   |               Robust
+              vptb | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------------+----------------------------------------------------------------
+             n_cat |
+                1  |   .0017868   .0018704     0.96   0.342    -.0019264    .0055001
+                2  |   .0053676   .0022561     2.38   0.019     .0008887    .0098465
+                   |
+    1.fill_parity2 |  -.0035832   .0006077    -5.90   0.000    -.0047896   -.0023767
+    1.miss_parity2 |    .024344   .0354863     0.69   0.494    -.0461052    .0947931
+1.fill_parity3plus |   -.003734   .0011387    -3.28   0.001    -.0059947   -.0014734
+1.miss_parity3plus |          0  (omitted)
+   1.fill_meduc_hs |  -.0060614    .001677    -3.61   0.000    -.0093906   -.0027322
+   1.miss_meduc_hs |   .0219802    .013016     1.69   0.095    -.0038599    .0478202
+1.fill_meduc_gt_hs |  -.0084523   .0013999    -6.04   0.000    -.0112314   -.0056733
+1.miss_meduc_gt_hs |          0  (omitted)
+1.fill_infant_male |   .0007441   .0004967     1.50   0.137    -.0002419    .0017301
+0.miss_infant_male |          0  (omitted)
+    1.fill_married |  -.0096335     .00164    -5.87   0.000    -.0128894   -.0063777
+    1.miss_married |  -.0512364   .0022542   -22.73   0.000    -.0557116   -.0467612
+          fill_age |  -.0000101   .0000899    -0.11   0.910    -.0001887    .0001684
+        0.miss_age |          0  (omitted)
+             _cons |   .0262383   .0035205     7.45   0.000     .0192492    .0332273
+------------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-------------------------------------------------------------------------+
+                     Absorbed FE | Categories  - Redundant  = Num. Coefs |
+---------------------------------+---------------------------------------|
+          county_fips#birth_year |       524         524           0    *|
+   birth_year#conception_quarter |        23           1          22     |
+-------------------------------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+Average marginal effects                               Number of obs = 113,542
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0017868   .0018704     0.96   0.339    -.0018791    .0054528
+          2  |   .0053676   .0022561     2.38   0.017     .0009458    .0097895
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+Average marginal effects                               Number of obs = 113,542
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+---------------------------
+             |    Number of
+             |  comparisons
+-------------+-------------
+       n_cat |            2
+---------------------------
+
+------------------------------------------------------------------------------
+             |            Delta-method      Sidak                Sidak
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0017868   .0018704     0.96   0.564    -.0023963      .00597
+          2  |   .0053676   .0022561     2.38   0.034     .0003219    .0104133
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+lbw: COMPLETE-CASE ANALYSIS
+(dropped 3 singleton observations)
+(MWFE estimator converged in 6 iterations)
+
+HDFE Linear regression                            Number of obs   =    113,328
+Absorbing 2 HDFE groups                           F(   9,     95) =      83.75
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.0157
+                                                  Adj R-squared   =     0.0109
+                                                  Within R-sq.    =     0.0078
+Number of clusters (county_fips) =         96     Root MSE        =     0.2018
+
+                            (Std. err. adjusted for 96 clusters in county_fips)
+-------------------------------------------------------------------------------
+              |               Robust
+          lbw | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+--------------+----------------------------------------------------------------
+        n_cat |
+           1  |  -.0029894   .0024953    -1.20   0.234    -.0079432    .0019644
+           2  |  -.0025431   .0026662    -0.95   0.343    -.0078363    .0027501
+              |
+    1.parity2 |  -.0219076   .0014489   -15.12   0.000     -.024784   -.0190311
+1.parity3plus |  -.0259407   .0022738   -11.41   0.000    -.0304548   -.0214267
+   1.meduc_hs |  -.0262785   .0033758    -7.78   0.000    -.0329803   -.0195767
+1.meduc_gt_hs |  -.0395265   .0029496   -13.40   0.000    -.0453822   -.0336708
+1.infant_male |  -.0053024   .0011689    -4.54   0.000     -.007623   -.0029818
+    1.married |  -.0211281   .0023019    -9.18   0.000    -.0256979   -.0165583
+ maternal_age |   .0009112   .0001607     5.67   0.000     .0005923    .0012301
+        _cons |   .0872903   .0051042    17.10   0.000     .0771572    .0974235
+-------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-------------------------------------------------------------------------+
+                     Absorbed FE | Categories  - Redundant  = Num. Coefs |
+---------------------------------+---------------------------------------|
+          county_fips#birth_year |       524         524           0    *|
+   birth_year#conception_quarter |        23           1          22     |
+-------------------------------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+Average marginal effects                               Number of obs = 113,328
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |  -.0029894   .0024953    -1.20   0.231    -.0078801    .0019013
+          2  |  -.0025431   .0026662    -0.95   0.340    -.0077689    .0026826
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+Average marginal effects                               Number of obs = 113,328
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+---------------------------
+             |    Number of
+             |  comparisons
+-------------+-------------
+       n_cat |            2
+---------------------------
+
+------------------------------------------------------------------------------
+             |            Delta-method      Sidak                Sidak
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |  -.0029894   .0024953    -1.20   0.409    -.0085701    .0025913
+          2  |  -.0025431   .0026662    -0.95   0.565    -.0085061    .0034199
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+lbw: MISSING-INDICATOR ANALYSIS
+(dropped 3 singleton observations)
+(MWFE estimator converged in 6 iterations)
+note: 0bn.miss_infant_male is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: 0bn.miss_age is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: 0b.miss_parity3plus omitted because of collinearity
+note: 0b.miss_meduc_gt_hs omitted because of collinearity
+
+HDFE Linear regression                            Number of obs   =    113,542
+Absorbing 2 HDFE groups                           F(  12,     95) =     361.29
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.0160
+                                                  Adj R-squared   =     0.0111
+                                                  Within R-sq.    =     0.0080
+Number of clusters (county_fips) =         96     Root MSE        =     0.2021
+
+                                 (Std. err. adjusted for 96 clusters in county_fips)
+------------------------------------------------------------------------------------
+                   |               Robust
+               lbw | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------------+----------------------------------------------------------------
+             n_cat |
+                1  |  -.0026928    .002461    -1.09   0.277    -.0075785    .0021929
+                2  |    -.00211   .0026433    -0.80   0.427    -.0073576    .0031377
+                   |
+    1.fill_parity2 |  -.0220389    .001489   -14.80   0.000    -.0249949   -.0190829
+    1.miss_parity2 |  -.0527189   .0073571    -7.17   0.000    -.0673246   -.0381133
+1.fill_parity3plus |  -.0260074     .00228   -11.41   0.000    -.0305337   -.0214811
+1.miss_parity3plus |          0  (omitted)
+   1.fill_meduc_hs |  -.0263271   .0033625    -7.83   0.000    -.0330024   -.0196518
+   1.miss_meduc_hs |   .0408882   .0205049     1.99   0.049     .0001809    .0815956
+1.fill_meduc_gt_hs |  -.0396021   .0029272   -13.53   0.000    -.0454133    -.033791
+1.miss_meduc_gt_hs |          0  (omitted)
+1.fill_infant_male |  -.0054462   .0011924    -4.57   0.000    -.0078133    -.003079
+0.miss_infant_male |          0  (omitted)
+    1.fill_married |  -.0207945   .0023005    -9.04   0.000    -.0253615   -.0162275
+    1.miss_married |  -.1007106   .0028786   -34.99   0.000    -.1064254   -.0949959
+          fill_age |   .0009065   .0001565     5.79   0.000     .0005957    .0012172
+        0.miss_age |          0  (omitted)
+             _cons |   .0870182   .0050964    17.07   0.000     .0769006    .0971359
+------------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-------------------------------------------------------------------------+
+                     Absorbed FE | Categories  - Redundant  = Num. Coefs |
+---------------------------------+---------------------------------------|
+          county_fips#birth_year |       524         524           0    *|
+   birth_year#conception_quarter |        23           1          22     |
+-------------------------------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+Average marginal effects                               Number of obs = 113,542
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |  -.0026928    .002461    -1.09   0.274    -.0075162    .0021307
+          2  |    -.00211   .0026433    -0.80   0.425    -.0072908    .0030709
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+Average marginal effects                               Number of obs = 113,542
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+---------------------------
+             |    Number of
+             |  comparisons
+-------------+-------------
+       n_cat |            2
+---------------------------
+
+------------------------------------------------------------------------------
+             |            Delta-method      Sidak                Sidak
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |  -.0026928    .002461    -1.09   0.473    -.0081967    .0028112
+          2  |    -.00211   .0026433    -0.80   0.669    -.0080217    .0038018
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+vlbw: COMPLETE-CASE ANALYSIS
+(dropped 3 singleton observations)
+(MWFE estimator converged in 6 iterations)
+
+HDFE Linear regression                            Number of obs   =    113,328
+Absorbing 2 HDFE groups                           F(   9,     95) =      10.19
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.0107
+                                                  Adj R-squared   =     0.0058
+                                                  Within R-sq.    =     0.0008
+Number of clusters (county_fips) =         96     Root MSE        =     0.0794
+
+                            (Std. err. adjusted for 96 clusters in county_fips)
+-------------------------------------------------------------------------------
+              |               Robust
+         vlbw | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+--------------+----------------------------------------------------------------
+        n_cat |
+           1  |   .0002571   .0009856     0.26   0.795    -.0016995    .0022137
+           2  |   .0024477   .0012606     1.94   0.055     -.000055    .0049504
+              |
+    1.parity2 |  -.0028684   .0005932    -4.84   0.000     -.004046   -.0016908
+1.parity3plus |  -.0038103   .0009251    -4.12   0.000    -.0056469   -.0019738
+   1.meduc_hs |  -.0035577   .0009056    -3.93   0.000    -.0053555   -.0017599
+1.meduc_gt_hs |  -.0049636   .0008983    -5.53   0.000    -.0067469   -.0031802
+1.infant_male |   .0005005   .0003655     1.37   0.174    -.0002251    .0012261
+    1.married |  -.0030614   .0006901    -4.44   0.000    -.0044314   -.0016914
+ maternal_age |   .0002427   .0000648     3.74   0.000      .000114    .0003714
+        _cons |   .0076119   .0020217     3.77   0.000     .0035984    .0116254
+-------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-------------------------------------------------------------------------+
+                     Absorbed FE | Categories  - Redundant  = Num. Coefs |
+---------------------------------+---------------------------------------|
+          county_fips#birth_year |       524         524           0    *|
+   birth_year#conception_quarter |        23           1          22     |
+-------------------------------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+Average marginal effects                               Number of obs = 113,328
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0002571   .0009856     0.26   0.794    -.0016746    .0021888
+          2  |   .0024477   .0012606     1.94   0.052    -.0000231    .0049186
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+Average marginal effects                               Number of obs = 113,328
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+---------------------------
+             |    Number of
+             |  comparisons
+-------------+-------------
+       n_cat |            2
+---------------------------
+
+------------------------------------------------------------------------------
+             |            Delta-method      Sidak                Sidak
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0002571   .0009856     0.26   0.958    -.0019471    .0024613
+          2  |   .0024477   .0012606     1.94   0.102    -.0003717    .0052672
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+vlbw: MISSING-INDICATOR ANALYSIS
+(dropped 3 singleton observations)
+(MWFE estimator converged in 6 iterations)
+note: 0bn.miss_infant_male is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: 0bn.miss_age is probably collinear with the fixed effects (all partialled-out values are close to zero; tol = 1.0e-09)
+note: 0b.miss_parity3plus omitted because of collinearity
+note: 0b.miss_meduc_gt_hs omitted because of collinearity
+
+HDFE Linear regression                            Number of obs   =    113,542
+Absorbing 2 HDFE groups                           F(  12,     95) =     184.14
+Statistics robust to heteroskedasticity           Prob > F        =     0.0000
+                                                  R-squared       =     0.0108
+                                                  Adj R-squared   =     0.0059
+                                                  Within R-sq.    =     0.0009
+Number of clusters (county_fips) =         96     Root MSE        =     0.0796
+
+                                 (Std. err. adjusted for 96 clusters in county_fips)
+------------------------------------------------------------------------------------
+                   |               Robust
+              vlbw | Coefficient  std. err.      t    P>|t|     [95% conf. interval]
+-------------------+----------------------------------------------------------------
+             n_cat |
+                1  |   .0003327    .000973     0.34   0.733    -.0015989    .0022644
+                2  |   .0025593   .0012544     2.04   0.044     .0000689    .0050496
+                   |
+    1.fill_parity2 |  -.0028958   .0005925    -4.89   0.000    -.0040721   -.0017194
+    1.miss_parity2 |  -.0046221   .0011047    -4.18   0.000    -.0068151   -.0024291
+1.fill_parity3plus |  -.0038132   .0009236    -4.13   0.000    -.0056467   -.0019797
+1.miss_parity3plus |          0  (omitted)
+   1.fill_meduc_hs |   -.003588   .0008997    -3.99   0.000    -.0053742   -.0018018
+   1.miss_meduc_hs |   .0150649   .0091298     1.65   0.102    -.0030601    .0331899
+1.fill_meduc_gt_hs |  -.0049985   .0008939    -5.59   0.000    -.0067731   -.0032238
+1.miss_meduc_gt_hs |          0  (omitted)
+1.fill_infant_male |   .0005156   .0003636     1.42   0.159    -.0002062    .0012375
+0.miss_infant_male |          0  (omitted)
+    1.fill_married |  -.0028535   .0006839    -4.17   0.000    -.0042112   -.0014957
+    1.miss_married |  -.0226009   .0011366   -19.88   0.000    -.0248573   -.0203444
+          fill_age |   .0002359   .0000647     3.65   0.000     .0001074    .0003643
+        0.miss_age |          0  (omitted)
+             _cons |   .0075659   .0020056     3.77   0.000     .0035843    .0115475
+------------------------------------------------------------------------------------
+
+Absorbed degrees of freedom:
+-------------------------------------------------------------------------+
+                     Absorbed FE | Categories  - Redundant  = Num. Coefs |
+---------------------------------+---------------------------------------|
+          county_fips#birth_year |       524         524           0    *|
+   birth_year#conception_quarter |        23           1          22     |
+-------------------------------------------------------------------------+
+* = FE nested within cluster; treated as redundant for DoF computation
+
+Average marginal effects                               Number of obs = 113,542
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+------------------------------------------------------------------------------
+             |            Delta-method
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0003327    .000973     0.34   0.732    -.0015743    .0022398
+          2  |   .0025593   .0012544     2.04   0.041     .0001006    .0050179
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+Average marginal effects                               Number of obs = 113,542
+Model VCE: Robust
+
+Expression: Linear prediction, predict()
+dy/dx wrt:  1.n_cat 2.n_cat
+
+---------------------------
+             |    Number of
+             |  comparisons
+-------------+-------------
+       n_cat |            2
+---------------------------
+
+------------------------------------------------------------------------------
+             |            Delta-method      Sidak                Sidak
+             |      dy/dx   std. err.      z    P>|z|     [95% conf. interval]
+-------------+----------------------------------------------------------------
+       n_cat |
+          1  |   .0003327    .000973     0.34   0.928    -.0018433    .0025088
+          2  |   .0025593   .0012544     2.04   0.081    -.0002462    .0053648
+------------------------------------------------------------------------------
+Note: dy/dx for factor levels is the discrete change from the base level.
+
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\Users\jsemprini\OneDrive - Des Moines University\4-DMU-Research\a-Water\final-plosupdate\stata\missing-mylog_tests-allyr-primary.log
+  log type:  text
+ closed on:  17 Nov 2026, 15:13:58
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
